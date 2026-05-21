@@ -10,9 +10,13 @@ GitHub issue about the demo test case: https://github.com/etcd-io/etcd/issues/15
 
 ---
 
+# Prerequisites
+
+Install Go as instructed on https://go.dev/doc/install
+
 # Setup GCT
 ```bash
-git clone -b demo https://github.com/focs-lab/gct.git
+git clone https://github.com/focs-lab/gct.git
 cd gct
 go mod tidy
 ```
@@ -26,21 +30,29 @@ git checkout f7af6b64b
 
 # Run the test file `etcd/client/v3/txn_test.go` without GCT
 ```bash
-cd etcd/client/v3
+cd client/v3
 go test -vet=off -run TestTxnPanics
 ```
 You should see that the test passes. 
 
 # Run Demo Test Case with GCT
 ## Step 1: Instrument the target program
+
+Back to the GCT main directory
+
 ```bash
-cd gct
+cd ../../..
 
 _CCT_ROOT_PROJ_LOC=<abs-path-to-gct-folder> go run ./cmd/instrumentation/instr -path etcd/client/v3
 ```
 
 ## Step 2: Run instrumented test
-`_CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=random_walk _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics`
+
+```bash
+_CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=random_walk _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics
+```
 
 ## Replay Demo Test Case with GCT
-`_CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=replay _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics`
+```bash
+_CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=replay _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics
+```
