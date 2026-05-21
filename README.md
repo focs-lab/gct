@@ -1,4 +1,6 @@
-﻿# GCT: Concurrency Testing for Go
+<a href="url"><img src="gct-logo.png" align="right" width="200" ></a>
+ 
+ # GCT: Concurrency Testing for Go
 
 The context below shows how to use GCT to find a reported bug on etcd. 
 
