@@ -1,0 +1,1 @@
+_CCT_ROOT_PROJ_LOC=`pwd` go run ./cmd/instrumentation/instr -path $1
