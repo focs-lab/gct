@@ -43,7 +43,7 @@ Back to the GCT main directory
 ```bash
 cd ../../..
 
-_CCT_ROOT_PROJ_LOC=<abs-path-to-gct-folder> go run ./cmd/instrumentation/instr -path etcd/client/v3
+./gct-instrument.sh etcd/client/v3
 ```
 
 ## Step 2: Run instrumented test
