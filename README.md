@@ -1,4 +1,6 @@
-﻿# GCT: Concurrency Testing for Go
+<a href="url"><img src="gct-logo.png" align="right" width="200" ></a>
+ 
+ # GCT: Concurrency Testing for Go
 
 The context below shows how to use GCT to find a reported bug on etcd. 
 
@@ -43,7 +45,7 @@ Back to the GCT main directory
 ```bash
 cd ../../..
 
-_CCT_ROOT_PROJ_LOC=<abs-path-to-gct-folder> go run ./cmd/instrumentation/instr -path etcd/client/v3
+./gct-instrument.sh etcd/client/v3
 ```
 
 ## Step 2: Run instrumented test
