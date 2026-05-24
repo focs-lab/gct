@@ -54,7 +54,7 @@ func usage() {
 Usage:
   gct instrument <path>
   gct test [gct flags] [go test args...]
-  gct replay <trace.log> [go test args...]
+  gct replay -trace <trace.log> [go test args...]
   gct clean [packages...]
 
 Examples:
@@ -62,13 +62,15 @@ Examples:
   gct test ./...
   gct test -trace trace.log -scheduler random_walk ./...
   gct test -run TestTxnPanics
-  gct replay trace.log
-  gct replay trace.log -run TestTxnPanics
+  gct replay -trace trace.log -run TestTxnPanics
   gct clean ./...
 
 Flags for gct test:
   -trace <file>        trace file to write; default trace.log
   -scheduler <name>    scheduler to use; default random_walk
+
+Flags for gct replay:
+  -trace <file>        trace file to replay; default trace.log
 `)
 }
 
@@ -125,6 +127,10 @@ func runTest(args []string) error {
 		goTestArgs = []string{"./..."}
 	}
 
+	if scheduler == "replay" {
+		return errors.New(`use "gct replay -trace <file>" instead of "gct test -scheduler replay"`)
+	}
+
 	fmt.Printf("GCT: running go test with scheduler %q\n", scheduler)
 	fmt.Printf("GCT: writing trace to %s\n", trace)
 
@@ -132,12 +138,36 @@ func runTest(args []string) error {
 }
 
 func runReplay(args []string) error {
-	if len(args) < 1 {
-		return errors.New("replay requires a trace file")
+	trace := ""
+	traceSet := false
+	goTestArgs := make([]string, 0, len(args))
+
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--":
+			goTestArgs = append(goTestArgs, args[i+1:]...)
+			i = len(args)
+		case "-trace":
+			if i+1 >= len(args) {
+				return errors.New("-trace requires a file")
+			}
+			trace = args[i+1]
+			traceSet = true
+			i++
+		default:
+			if value, ok := strings.CutPrefix(args[i], "-trace="); ok {
+				trace = value
+				traceSet = true
+				continue
+			}
+			goTestArgs = append(goTestArgs, args[i])
+		}
 	}
 
-	trace := args[0]
-	goTestArgs := args[1:]
+	if !traceSet {
+		return errors.New("replay requires -trace <file>")
+	}
+
 	if len(goTestArgs) == 0 {
 		goTestArgs = []string{"./..."}
 	}
