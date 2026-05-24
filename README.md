@@ -2,9 +2,7 @@
  
  # GCT: Concurrency Testing for Go
 
-The context below shows how to use GCT to find a reported bug on etcd. 
-
-The GCT is still under development...
+GCT helps find concurrency bugs in Go programs by taking control of goroutine scheduling during tests. It can explore alternative schedules, record failures, and replay them deterministically, making flaky schedule-dependent bugs easier to reproduce and debug.
 
 ## Quick start
 
