@@ -1,23 +1,20 @@
-package main
+package instrumenter
 
 import (
 	"fmt"
-	"github.com/focs-lab/gct/config"
-	"golang.org/x/mod/modfile"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/focs-lab/gct/config"
+	"golang.org/x/mod/modfile"
 )
 
-var (
-	modulePath = config.ROOT_PROJ_IMPORT_PATH
-	version    = "v1.2.3"
-	replaceTo  = os.Getenv(config.ROOT_PROJ_LOC)
-)
+const requiredVersion = "v1.2.3"
 
-func updateAllGoMod(root string) error {
+func updateAllGoMod(root string, replaceRoot string) error {
 	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -40,7 +37,7 @@ func updateAllGoMod(root string) error {
 			return err
 		}
 
-		if err := updateOneGoMod(goModPath); err != nil {
+		if err := updateOneGoMod(goModPath, replaceRoot); err != nil {
 			fmt.Println("update go.mod failed:", err)
 			return err
 		}
@@ -112,7 +109,7 @@ func detectPackageName(dir string) (string, error) {
 	return "_cct_temp_import", nil
 }
 
-func updateOneGoMod(path string) error {
+func updateOneGoMod(path string, replaceRoot string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -123,16 +120,15 @@ func updateOneGoMod(path string) error {
 		return fmt.Errorf("parse go.mod failed: %w", err)
 	}
 
-	if err := file.AddRequire(modulePath, version); err != nil {
+	if err := file.AddRequire(config.ROOT_PROJ_IMPORT_PATH, requiredVersion); err != nil {
 		return fmt.Errorf("add require failed: %w", err)
 	}
 
-	old := modulePath
-	new := replaceTo
-
-	if err := file.AddReplace(old, "", new, ""); err != nil {
-		_ = file.DropReplace(old, "")
-		_ = file.AddReplace(old, "", new, "")
+	if replaceRoot != "" {
+		if err := file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", replaceRoot, ""); err != nil {
+			_ = file.DropReplace(config.ROOT_PROJ_IMPORT_PATH, "")
+			_ = file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", replaceRoot, "")
+		}
 	}
 
 	out, err := file.Format()

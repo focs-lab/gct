@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/focs-lab/gct/config"
+	"github.com/focs-lab/gct/instrumentation/instrumenter"
 )
 
 const (
@@ -77,22 +77,13 @@ func runInstrument(args []string) error {
 		return errors.New("instrument requires exactly one target path")
 	}
 
-	root, err := gctRoot()
-	if err != nil {
-		return err
-	}
-
 	target := args[0]
 	target = normalizeInstrumentPath(target)
 	fmt.Printf("GCT: instrumenting %s\n", target)
 
-	cmd := exec.Command("go", "run", filepath.Join(root, "cmd", "instrumentation", "instr"), "-path", target)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-	cmd.Env = append(os.Environ(), config.ROOT_PROJ_LOC+"="+root)
-
-	return cmd.Run()
+	return instrumenter.Run(target, instrumenter.Options{
+		ReplaceRoot: os.Getenv(config.ROOT_PROJ_LOC),
+	})
 }
 
 func runTest(args []string) error {
@@ -182,20 +173,6 @@ func runGoTest(goTestArgs []string, trace string, scheduler string) error {
 	)
 
 	return cmd.Run()
-}
-
-func gctRoot() (string, error) {
-	if root := os.Getenv(config.ROOT_PROJ_LOC); root != "" {
-		return filepath.Abs(root)
-	}
-
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", errors.New("could not locate the GCT source root")
-	}
-
-	root := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
-	return root, nil
 }
 
 func normalizeInstrumentPath(path string) string {
