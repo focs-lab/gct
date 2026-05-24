@@ -36,6 +36,11 @@ cd client/v3
 go test -vet=off -run TestTxnPanics
 ```
 You should see that the test passes. 
+Now, try running this test multiple times:
+
+```bash
+for i in {1..10}; do go test -vet=off -run TestTxnPanics || break; done;
+```
 
 # Run Demo Test Case with GCT
 ## Step 1: Instrument the target program
