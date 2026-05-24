@@ -52,18 +52,24 @@ func usage() {
 	fmt.Print(`GCT: Controlled Concurrency Testing for Go
 
 Usage:
-  gct instrument <path>
+  gct instrument [gct flags] <path>
   gct test [gct flags] [go test args...]
   gct replay -trace <trace.log> [go test args...]
   gct clean [packages...]
 
 Examples:
   gct instrument ./client/v3
+  gct instrument -gct-root /path/to/gct ./client/v3
+  gct instrument -gct-version v0.1.0 ./client/v3
   gct test ./...
   gct test -trace trace.log -scheduler random_walk ./...
   gct test -run TestTxnPanics
   gct replay -trace trace.log -run TestTxnPanics
   gct clean ./...
+
+Flags for gct instrument:
+  -gct-root <path>       local GCT checkout to use via go.mod replace
+  -gct-version <version> GCT module version to require; default v0.1.0
 
 Flags for gct test:
   -trace <file>        trace file to write; default trace.log
@@ -75,17 +81,50 @@ Flags for gct replay:
 }
 
 func runInstrument(args []string) error {
-	if len(args) != 1 {
+	targets := make([]string, 0, 1)
+	opts := instrumenter.Options{
+		ReplaceRoot: os.Getenv(config.ROOT_PROJ_LOC),
+	}
+
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "-gct-root":
+			if i+1 >= len(args) {
+				return errors.New("-gct-root requires a path")
+			}
+			opts.ReplaceRoot = args[i+1]
+			i++
+		case "-gct-version":
+			if i+1 >= len(args) {
+				return errors.New("-gct-version requires a version")
+			}
+			opts.Version = args[i+1]
+			i++
+		default:
+			if value, ok := strings.CutPrefix(args[i], "-gct-root="); ok {
+				opts.ReplaceRoot = value
+				continue
+			}
+			if value, ok := strings.CutPrefix(args[i], "-gct-version="); ok {
+				opts.Version = value
+				continue
+			}
+			if strings.HasPrefix(args[i], "-") {
+				return fmt.Errorf("unknown instrument flag %q", args[i])
+			}
+			targets = append(targets, args[i])
+		}
+	}
+
+	if len(targets) != 1 {
 		return errors.New("instrument requires exactly one target path")
 	}
 
-	target := args[0]
+	target := targets[0]
 	target = normalizeInstrumentPath(target)
 	fmt.Printf("GCT: instrumenting %s\n", target)
 
-	return instrumenter.Run(target, instrumenter.Options{
-		ReplaceRoot: os.Getenv(config.ROOT_PROJ_LOC),
-	})
+	return instrumenter.Run(target, opts)
 }
 
 func runTest(args []string) error {

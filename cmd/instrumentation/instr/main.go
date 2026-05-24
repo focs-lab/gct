@@ -13,8 +13,14 @@ import (
 func main() {
 	cfg := config.ParseArgs()
 
+	replaceRoot := cfg.GCTRoot
+	if replaceRoot == "" {
+		replaceRoot = os.Getenv(config.ROOT_PROJ_LOC)
+	}
+
 	if err := instrumenter.Run(cfg.Path, instrumenter.Options{
-		ReplaceRoot: os.Getenv(config.ROOT_PROJ_LOC),
+		ReplaceRoot: replaceRoot,
+		Version:     cfg.GCTVersion,
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

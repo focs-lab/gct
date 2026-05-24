@@ -15,6 +15,7 @@ import (
 
 type Options struct {
 	ReplaceRoot string
+	Version     string
 }
 
 func Run(path string, opts Options) error {
@@ -26,7 +27,7 @@ func Run(path string, opts Options) error {
 	fmt.Printf("Path: %s\n", path)
 	fmt.Printf("Abs Path: %s \n", absPath)
 
-	if err := updateAllGoMod(absPath, opts.ReplaceRoot); err != nil {
+	if err := updateAllGoMod(absPath, opts); err != nil {
 		return err
 	}
 

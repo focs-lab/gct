@@ -12,9 +12,12 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-const requiredVersion = "v0.1.0"
+const (
+	defaultRequiredVersion = "v0.1.0"
+	localReplaceVersion    = "v0.0.0"
+)
 
-func updateAllGoMod(root string, replaceRoot string) error {
+func updateAllGoMod(root string, opts Options) error {
 	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -37,7 +40,7 @@ func updateAllGoMod(root string, replaceRoot string) error {
 			return err
 		}
 
-		if err := updateOneGoMod(goModPath, replaceRoot); err != nil {
+		if err := updateOneGoMod(goModPath, opts); err != nil {
 			fmt.Println("update go.mod failed:", err)
 			return err
 		}
@@ -109,7 +112,7 @@ func detectPackageName(dir string) (string, error) {
 	return "_cct_temp_import", nil
 }
 
-func updateOneGoMod(path string, replaceRoot string) error {
+func updateOneGoMod(path string, opts Options) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -120,14 +123,14 @@ func updateOneGoMod(path string, replaceRoot string) error {
 		return fmt.Errorf("parse go.mod failed: %w", err)
 	}
 
-	if err := file.AddRequire(config.ROOT_PROJ_IMPORT_PATH, requiredVersion); err != nil {
+	if err := file.AddRequire(config.ROOT_PROJ_IMPORT_PATH, requiredVersion(opts)); err != nil {
 		return fmt.Errorf("add require failed: %w", err)
 	}
 
-	if replaceRoot != "" {
-		if err := file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", replaceRoot, ""); err != nil {
+	if opts.ReplaceRoot != "" {
+		if err := file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", opts.ReplaceRoot, ""); err != nil {
 			_ = file.DropReplace(config.ROOT_PROJ_IMPORT_PATH, "")
-			_ = file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", replaceRoot, "")
+			_ = file.AddReplace(config.ROOT_PROJ_IMPORT_PATH, "", opts.ReplaceRoot, "")
 		}
 	}
 
@@ -137,6 +140,16 @@ func updateOneGoMod(path string, replaceRoot string) error {
 	}
 
 	return os.WriteFile(path, out, 0644)
+}
+
+func requiredVersion(opts Options) string {
+	if opts.Version != "" {
+		return opts.Version
+	}
+	if opts.ReplaceRoot != "" {
+		return localReplaceVersion
+	}
+	return defaultRequiredVersion
 }
 
 func tidyGoMod(goModPath string) error {
