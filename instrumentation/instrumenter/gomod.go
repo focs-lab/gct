@@ -12,7 +12,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-const requiredVersion = "v1.2.3"
+const requiredVersion = "v0.1.0"
 
 func updateAllGoMod(root string, replaceRoot string) error {
 	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
