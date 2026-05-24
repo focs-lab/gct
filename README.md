@@ -6,6 +6,40 @@ The context below shows how to use GCT to find a reported bug on etcd.
 
 The GCT is still under development...
 
+## Quick start
+
+Install the `gct` command from this checkout:
+
+```bash
+go install ./cmd/gct
+```
+
+Make sure Go's command install directory is on your `PATH`:
+
+```bash
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+Instrument a target package:
+
+```bash
+gct instrument ./...
+```
+
+Run tests under GCT:
+
+```bash
+gct test ./...
+```
+
+Replay a recorded schedule:
+
+```bash
+gct replay trace.log
+```
+
+GCT currently uses `random_walk` as the default scheduler and writes schedules to `trace.log`.
+
 # Reference
 
 GitHub issue about the demo test case: https://github.com/etcd-io/etcd/issues/15666
@@ -49,8 +83,7 @@ Back to the GCT main directory
 
 ```bash
 cd ../../..
-
-./gct-instrument.sh etcd/client/v3
+go run ./cmd/gct instrument etcd/client/v3
 ```
 
 ## Step 2: Run instrumented test
@@ -59,7 +92,19 @@ cd ../../..
 _CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=random_walk _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics
 ```
 
+Or use the CLI from the instrumented package directory:
+
+```bash
+gct test -vet=off -run TestTxnPanics
+```
+
 ## Replay Demo Test Case with GCT
 ```bash
 _CCT_TRACE_LOC=trace.log _CCT_SCHEDULER_NAME=replay _CCT_RECORD_FLAG=true go test -vet=off -run TestTxnPanics
+```
+
+Or use the CLI from the instrumented package directory:
+
+```bash
+gct replay trace.log -vet=off -run TestTxnPanics
 ```
